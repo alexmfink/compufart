@@ -11,8 +11,11 @@ namespace Audolon::CompuFart {
         input event
         {
 
-            float in_pinch [[ name: "Pinch", min: 0.0f, max: 1.0f, init: 0.5f, step: 0.01f, automatable: true]];
-            float in_cheek [[ name: "Cheek", min: 0.0f, max: 1.0f, init: 0.5f, step: 0.01f, automatable: true]];
+            float in_pinch [[ name: "Pinch", min: 0.0f, max: 1.0f, init: 0.5f, step: 0.001f, automatable: true]];
+            float in_cheek [[ name: "Cheek", min: 0.0f, max: 1.0f, init: 0.5f, step: 0.001f, automatable: true]];
+
+            float in_strain [[ name: "Strain", min: 0.0f, max: 1.0f, init: 0.7f, step: 0.001f, automatable: true]];
+            float in_strainIntensity [[ name: "Strain Intensity", min: 0.0f, max: 1.0f, init: 0.5f, step: 0.001f, automatable: true]];
 
             float in_pressureEnvAttackTime [[ name: "Pressure Attack", min: 0.0f, max: 1.0f, init: 0.005f, step: 0.001f, automatable: true]];
             float in_pressureEnvDecayTime [[ name: "Pressure Decay", min: 0.0f, max: 5.0f, init: 0.020f, step: 0.001f, automatable: true]];
@@ -67,6 +70,10 @@ namespace Audolon::CompuFart {
 
             in_pinch -> singleCompufartVoice.in_pinch;
             in_cheek -> singleCompufartVoice.in_cheek;
+
+            in_strain -> singleCompufartVoice.in_strain;
+            in_strainIntensity -> singleCompufartVoice.in_strainIntensity;
+
             singleCompufartVoice.out_audio -> reverb.in_audio;
             reverb.out_audio -> out_audio;
         }
@@ -86,6 +93,9 @@ namespace Audolon::CompuFart {
         {
             float in_pinch;
             float in_cheek;
+
+            float in_strain;
+            float in_strainIntensity;
 
             float in_pressureEnvAttackTime;
             float in_pressureEnvDecayTime;
@@ -108,9 +118,9 @@ namespace Audolon::CompuFart {
 
         node 
         {
-            midi2butt     = MIDI2MonoButt;
+            midi2butt = MIDI2MonoButt;
             buttInputInterface = TerranceInputInterface;
-            buttModel     = Terrance;
+            buttModel = Terrance;
             buttOutputInterface = TerranceOutputInterface;
         }
 
@@ -140,6 +150,9 @@ namespace Audolon::CompuFart {
             midi2butt.out_panic -> buttOutputInterface.in_panic;
             in_pinch -> buttInputInterface.in_pinch;
             in_cheek -> buttInputInterface.in_cheek;
+
+            in_strain -> buttInputInterface.in_strain;
+            in_strainIntensity -> buttInputInterface.in_strainIntensity;
 
             buttInputInterface.out_frequencyHz -> buttModel.in_frequencyHz;
             buttInputInterface.out_pressure -> buttModel.in_pressure;

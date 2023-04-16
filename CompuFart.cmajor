@@ -12,6 +12,9 @@ namespace Audolon::CompuFart {
             float in_pinch; //<! A timbral control [0,1]
             float in_cheek; //<! A timbral control [0,1]
 
+            float in_strain;
+            float in_strainIntensity;
+
             devoid in_panic;
         }
 
@@ -38,9 +41,16 @@ namespace Audolon::CompuFart {
 
         std::random::RNG rng;
 
+        float m_pressureNoiseMagnitude;
+        float m_prevNoiseValue;
+        float m_noiseFilterCoeff;
+
         void init()
         {
             rng.seed(69L + processor.id);
+            m_pressureNoiseMagnitude = 0.f;
+            m_prevNoiseValue = 0.f;
+            m_noiseFilterCoeff = 0.0f;
         }
 
         event in_pinch (float pinch)
@@ -68,11 +78,26 @@ namespace Audolon::CompuFart {
             // amf TODO: Stop motion? Done in original?
         }
 
+        event in_strain(float strain)
+        {
+            const float StrainScale = 0.35f;
+            m_pressureNoiseMagnitude = Utils::ClipValue(StrainScale * strain, 0.f, StrainScale);
+        }
+
+        event in_strainIntensity(float val)
+        {
+            val = Utils::ClipValue(val, 0.0f, 1.0f);
+            float cutoffFreq = val * 10000.0f + 100.f;
+            m_noiseFilterCoeff = 1.0f - (cutoffFreq * float(twoPi) / float(processor.frequency)); // approximate
+            m_noiseFilterCoeff = Utils::ClipValue(m_noiseFilterCoeff, 0.f, 0.999f);
+        }
+
         event in_panic(devoid nothing) 
         {
             // amf TODO:
         }
 
+        // Note that this method changes state involving the noise generator and its filter
         float mapPressureControl(float pressure)
         {
             // Map control pressure values above the breakpoint linearly from "min" to "max".
@@ -84,8 +109,13 @@ namespace Audolon::CompuFart {
             {
                 return pressure/PressureBreakPoint * MinPressure;
             }
-            // amf TODO: make noise a param
-            return ((pressure - PressureBreakPoint) / (1.0f - PressureBreakPoint) * (MaxPressure - MinPressure) + MinPressure) * (0.95f + 0.25f * rng.getBipolar());
+
+            // Generate filtered noise
+            float randValue = (1.0f - m_noiseFilterCoeff) * rng.getBipolar();
+            randValue += randValue + m_noiseFilterCoeff * m_prevNoiseValue;
+            m_prevNoiseValue = randValue;
+
+            return ((pressure - PressureBreakPoint) / (1.0f - PressureBreakPoint) * (MaxPressure - MinPressure) + MinPressure) * 0.95f * (1.0f + m_pressureNoiseMagnitude * randValue);
         }
 
         void main()

@@ -28,7 +28,9 @@ namespace Audolon::CompuFart {
 
             int in_reverbMode [[ name: "Reverb", min: 0, max: 2, init:  1, text: "None|Toilet Bowl|Church Pew", automatable: true ]];
 
-            float in_pitchBendRangeSemitones [[ name: "Pitch Bend Range", min: 0.0f, max: 48.0f, init: 12.0f, step: 0.001f, automatable: true]];
+            float in_pitchBendRangeSemitones [[ name: "Pitch Bend Range", min: 0.0f, max: 48.0f, init: 48.0f, step: 0.001f, automatable: true]];
+
+            bool in_modWheelOn [[ name: "Mod Wheel", boolean, init: false, automatable: true]];
         }
 
         static_assert(Audolon::Reverb::NumRepootModes == 3, "Patch parameters assume 3 reverb modes");
@@ -61,6 +63,7 @@ namespace Audolon::CompuFart {
             in_pitchEnvReleaseTime -> singleCompufartVoice.in_pitchEnvReleaseTime;
 
             in_pitchBendRangeSemitones -> singleCompufartVoice.in_pitchBendRangeSemitones;
+            in_modWheelOn ->singleCompufartVoice.in_modWheelOn;
 
             in_pinch -> singleCompufartVoice.in_pinch;
             in_cheek -> singleCompufartVoice.in_cheek;
@@ -97,6 +100,8 @@ namespace Audolon::CompuFart {
             float in_pitchEnvReleaseTime;
 
             float in_pitchBendRangeSemitones;
+
+            bool in_modWheelOn;
         }
 
         output stream float out_audio;
@@ -124,6 +129,9 @@ namespace Audolon::CompuFart {
             in_pitchEnvDecayTime -> midi2butt.in_pitchEnvDecayTime;
             in_pitchEnvSustainLevel -> midi2butt.in_pitchEnvSustainLevel;
             in_pitchEnvReleaseTime -> midi2butt.in_pitchEnvReleaseTime;
+
+            in_pitchBendRangeSemitones -> midi2butt.in_pitchBendRangeSemitones;
+            in_modWheelOn -> midi2butt.in_modWheelOn;
 
             midi2butt.out_frequencyHz -> buttInputInterface.in_frequencyHz;
             midi2butt.out_controlPressure -> buttInputInterface.in_controlPressure;
@@ -171,6 +179,8 @@ namespace Audolon::CompuFart {
             float in_pitchEnvReleaseTime;
 
             float in_pitchBendRangeSemitones;
+
+            bool in_modWheelOn;
         }
 
         output event 
@@ -185,13 +195,16 @@ namespace Audolon::CompuFart {
         }
 
         const int DefaultGlide = max(1, int(0.0005 * processor.frequency)); // 0.5 msec
-        const float DefaultFrequencyHz = 100.0f;
+        const float DefaultFrequencyHz = 100.0f; 
         const float DefaultPitchBendRangeSemitones = 12.0f;
 
         int m_numNotes;
     
         var m_pressureEnvelope = Envelopes::GetADSR(processor.frequency);
         std::smoothing::SmoothedValue m_pressureVelocityLevel; //!< The latest NoteOn Velocity used to scale the pressure
+        std::smoothing::SmoothedValue m_pressureModLevel; //!< Pressure scaling from Mod Wheel
+        bool m_modWheelOn;
+        float m_pressureModWheelTarget;
 
         var m_pitchEnvelope = Envelopes::GetADSR(processor.frequency);
         std::smoothing::SmoothedValue m_pitchEnvAmount;
@@ -208,6 +221,8 @@ namespace Audolon::CompuFart {
             // Note that the envelopes should already be init'ed
             m_numNotes = 0;
             m_pressureVelocityLevel.reset(0.0f);
+            m_modWheelOn = false;
+            m_pressureModWheelTarget = 1.0f;
             m_pitchGlideSamples = DefaultGlide;
             m_pitchEnvAmount.reset(0.0f);
             m_smoothFrequencyHz.reset(DefaultFrequencyHz);
@@ -261,7 +276,12 @@ namespace Audolon::CompuFart {
 
         event in_midiEvent (std::notes::Control controlMsg)
         {
-            if (controlMsg.control == 123)
+            if (controlMsg.control == 1)
+            {
+                m_pressureModWheelTarget = controlMsg.value;
+                updateModWheel();
+            }
+            else if (controlMsg.control == 123)
             {
                 Panic();
                 out_panic <- devoid();
@@ -324,9 +344,20 @@ namespace Audolon::CompuFart {
             updatePitchBend();
         }
 
+        event in_modWheelOn(bool wheelOn)
+        {
+            m_modWheelOn = wheelOn;
+            updateModWheel();
+        }
+
         void updatePitchBend()
         {
             m_smoothPitchBend.setTarget(m_pitchBendTargetNormalized * m_pitchBendRangeSemitones, DefaultGlide);
+        }
+
+        void updateModWheel()
+        {
+            m_pressureModLevel.setTarget(m_modWheelOn ? m_pressureModWheelTarget : 1.0f, DefaultGlide);
         }
 
         void main()
@@ -336,7 +367,7 @@ namespace Audolon::CompuFart {
                 float pitchEnvInOctaves = m_pitchEnvAmount.getNext() * m_pitchEnvelope.tick();
                 float pitchBendInSemitones = m_smoothPitchBend.getNext();
                 out_frequencyHz <- m_smoothFrequencyHz.getNext() * (2.0f **(pitchEnvInOctaves + pitchBendInSemitones / 12.0f));
-                out_controlPressure <- m_pressureVelocityLevel.getNext() * m_pressureEnvelope.tick();
+                out_controlPressure <- m_pressureVelocityLevel.getNext() * m_pressureEnvelope.tick() * m_pressureModLevel.getNext();
                 advance();
             }
         }

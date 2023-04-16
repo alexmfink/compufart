@@ -16,7 +16,12 @@ The quickest way to use the physical model is to use the `processor` named `Terr
 
 The provided mono synth, `CompuFartSynth` shows one possible way to construct a digital instrument with the fart engine.
 
+## Notes
+
+* The model is not currently (pitch) tuned. However, using typical pitch control inputs (keyboard, bend) should provide relative pitch control.
+* There is currently no guarantee of compatibility or consistency between different versions of the model, synth, or other patches and code. If you wish to preserve a particular sound, it is recommended that you record it and make note of the parameter values and the version and git commit SHA. Of course, you can also fork the code.
+
 ## How Does it Work
 
-coming soon
+(Coming Soon)
 

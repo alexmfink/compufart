@@ -13,7 +13,6 @@ namespace Audolon::CompuFart {
 
             float in_pinch [[ name: "Pinch", min: 0.0f, max: 1.0f, init: 0.5f, step: 0.001f, automatable: true]];
             float in_cheek [[ name: "Cheek", min: 0.0f, max: 1.0f, init: 0.5f, step: 0.001f, automatable: true]];
-
             float in_strain [[ name: "Strain", min: 0.0f, max: 1.0f, init: 0.7f, step: 0.001f, automatable: true]];
             float in_strainIntensity [[ name: "Strain Intensity", min: 0.0f, max: 1.0f, init: 0.5f, step: 0.001f, automatable: true]];
 
@@ -22,7 +21,6 @@ namespace Audolon::CompuFart {
             float in_pressureEnvSustainLevel [[ name: "Pressure Sustain", min: 0.0f, max: 1.0f, init: 0.8f, step: 0.001f, automatable: true]];
             float in_pressureEnvReleaseTime [[ name: "Pressure Release", min: 0.0f, max: 5.0f, init: 0.85f, step: 0.001f, automatable: true]];
 
-            float in_pitchGlideTime [[ name: "Pitch Glide", min: 0.0f, max: 1.0f, init: 0.1f, step: 0.001f, automatable: true]];
             float in_pitchEnvAmount [[ name: "Pitch Env Amount", min: -3.0f, max: 3.0f, init: 2.0f, step: 0.001f, automatable: true]];
             float in_pitchEnvAttackTime [[ name: "Pitch Attack", min: 0.0f, max: 1.0f, init: 0.005f, step: 0.001f, automatable: true]];
             float in_pitchEnvDecayTime [[ name: "Pitch Decay", min: 0.0f, max: 5.0f, init: 0.3f, step: 0.001f, automatable: true]];
@@ -31,8 +29,8 @@ namespace Audolon::CompuFart {
 
             int in_reverbMode [[ name: "Reverb", min: 0, max: 2, init:  1, text: "None|Toilet Bowl|Church Pew", automatable: true ]];
 
+            float in_pitchGlideTime [[ name: "Pitch Glide", min: 0.0f, max: 1.0f, init: 0.1f, step: 0.001f, automatable: true]];
             float in_pitchBendRangeSemitones [[ name: "Pitch Bend Range", min: 0.0f, max: 48.0f, init: 48.0f, step: 0.001f, automatable: true]];
-
             bool in_modWheelOn [[ name: "Mod Wheel", boolean, init: false, automatable: true]];
         }
 

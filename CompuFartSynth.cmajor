@@ -27,6 +27,8 @@ namespace Audolon::CompuFart {
             float in_pitchEnvReleaseTime [[ name: "Pitch Release", min: 0.0f, max: 5.0f, init: 0.25f, step: 0.001f, automatable: true]];
 
             int in_reverbMode [[ name: "Reverb", min: 0, max: 2, init:  1, text: "None|Toilet Bowl|Church Pew", automatable: true ]];
+
+            float in_pitchBendRangeSemitones [[ name: "Pitch Bend Range", min: 0.0f, max: 48.0f, init: 12.0f, step: 0.001f, automatable: true]];
         }
 
         static_assert(Audolon::Reverb::NumRepootModes == 3, "Patch parameters assume 3 reverb modes");
@@ -57,6 +59,8 @@ namespace Audolon::CompuFart {
             in_pitchEnvDecayTime -> singleCompufartVoice.in_pitchEnvDecayTime;
             in_pitchEnvSustainLevel -> singleCompufartVoice.in_pitchEnvSustainLevel;
             in_pitchEnvReleaseTime -> singleCompufartVoice.in_pitchEnvReleaseTime;
+
+            in_pitchBendRangeSemitones -> singleCompufartVoice.in_pitchBendRangeSemitones;
 
             in_pinch -> singleCompufartVoice.in_pinch;
             in_cheek -> singleCompufartVoice.in_cheek;
@@ -91,8 +95,10 @@ namespace Audolon::CompuFart {
             float in_pitchEnvDecayTime;
             float in_pitchEnvSustainLevel;
             float in_pitchEnvReleaseTime;
+
+            float in_pitchBendRangeSemitones;
         }
-        
+
         output stream float out_audio;
 
         node 
@@ -163,6 +169,8 @@ namespace Audolon::CompuFart {
             float in_pitchEnvDecayTime;
             float in_pitchEnvSustainLevel;
             float in_pitchEnvReleaseTime;
+
+            float in_pitchBendRangeSemitones;
         }
 
         output event 
@@ -176,7 +184,9 @@ namespace Audolon::CompuFart {
             float out_frequencyHz;
         }
 
-        const int DefaultGlide = 20;
+        const int DefaultGlide = max(1, int(0.0005 * processor.frequency)); // 0.5 msec
+        const float DefaultFrequencyHz = 100.0f;
+        const float DefaultPitchBendRangeSemitones = 12.0f;
 
         int m_numNotes;
     
@@ -189,6 +199,9 @@ namespace Audolon::CompuFart {
         int m_pitchGlideSamples;
 
         std::smoothing::SmoothedValue m_smoothFrequencyHz; //!< The latest NoteOn frequency. (The frequency of zero pitch envelope level)
+        std::smoothing::SmoothedValue m_smoothPitchBend;
+        float m_pitchBendRangeSemitones;
+        float m_pitchBendTargetNormalized;
 
         void init() 
         {
@@ -197,7 +210,10 @@ namespace Audolon::CompuFart {
             m_pressureVelocityLevel.reset(0.0f);
             m_pitchGlideSamples = DefaultGlide;
             m_pitchEnvAmount.reset(0.0f);
-            m_smoothFrequencyHz.reset(100.0f);
+            m_smoothFrequencyHz.reset(DefaultFrequencyHz);
+            m_smoothPitchBend.reset(0.0f);
+            m_pitchBendRangeSemitones = DefaultPitchBendRangeSemitones;
+            m_pitchBendTargetNormalized = 0.0f;
         }
 
         void Panic()
@@ -236,6 +252,12 @@ namespace Audolon::CompuFart {
         }
 
         // amf TODO: Handle more MIDI msgs (pitch, mod)
+        event in_midiEvent(std::notes::PitchBend pitchBend)
+        {
+            m_pitchBendTargetNormalized = pitchBend.bendSemitones / std::midi::semitoneBendRange;
+            updatePitchBend();
+        }
+
 
         event in_midiEvent (std::notes::Control controlMsg)
         {
@@ -296,11 +318,24 @@ namespace Audolon::CompuFart {
             m_pitchEnvelope.SetReleaseTimeSeconds(time);
         }
 
+        event in_pitchBendRangeSemitones(float semitones)
+        {
+            m_pitchBendRangeSemitones = semitones;
+            updatePitchBend();
+        }
+
+        void updatePitchBend()
+        {
+            m_smoothPitchBend.setTarget(m_pitchBendTargetNormalized * m_pitchBendRangeSemitones, DefaultGlide);
+        }
+
         void main()
         {
             loop
             {
-                out_frequencyHz <- m_smoothFrequencyHz.getNext() * (2.0f **(m_pitchEnvAmount.getNext() * m_pitchEnvelope.tick()));
+                float pitchEnvInOctaves = m_pitchEnvAmount.getNext() * m_pitchEnvelope.tick();
+                float pitchBendInSemitones = m_smoothPitchBend.getNext();
+                out_frequencyHz <- m_smoothFrequencyHz.getNext() * (2.0f **(pitchEnvInOctaves + pitchBendInSemitones / 12.0f));
                 out_controlPressure <- m_pressureVelocityLevel.getNext() * m_pressureEnvelope.tick();
                 advance();
             }

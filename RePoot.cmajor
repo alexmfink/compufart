@@ -160,6 +160,7 @@ namespace Audolon::Reverb
         void setLPF(float cutoffFreq)
         {
             // Design a one-pole LPF with the gain at DC set to 1
+            // Note that the negative of the coefficient is used later
             m_lpfCoefficient = (cutoffFreq * float(twoPi) / float(processor.frequency)) - 1.0f; // approximate
             m_lpfCoefficient = SanitizeGain(min(0.0f, m_lpfCoefficient));
             m_lpfNormalizingGain = 1.0f + m_lpfCoefficient;

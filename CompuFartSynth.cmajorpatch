@@ -1,7 +1,7 @@
 {
     "CmajorVersion":    1,
     "ID":               "com.audolon.compufart",
-    "version":          "0.1.00",
+    "version":          "0.1.01",
     "name":             "CompuFart",
     "description":      "CompuFart Fart Synthesizer",
     "category":         "generator",

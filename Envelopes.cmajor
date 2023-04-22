@@ -7,10 +7,10 @@ namespace Audolon::Envelopes {
     //! functions. Using structs within other structs may prevent this, so you may then use
     const int InitCodeADSR = 42069;
 
-    Initialized(InitCodeADSR)::ADSR GetADSR(float samplerate)
+    Initialized(InitCodeADSR)::ADSR GetADSR(float64 samplerate)
     {
         var adsr = Initialized(InitCodeADSR)::ADSR();
-        adsr.Initialize(samplerate);
+        adsr.Initialize(float (samplerate));
         return adsr;
     }
 }
@@ -40,7 +40,7 @@ namespace Audolon::Envelopes::Initialized(int code)
         float m_decayStep;
         float m_releaseStep;
         float m_sustainLevel;
-        
+
         bool isInited;
 
         void Initialize(float sampleRate)
@@ -59,7 +59,7 @@ namespace Audolon::Envelopes::Initialized(int code)
             this.m_lastOut = 0.f;
         }
 
-        void On() 
+        void On()
         {
             this.m_state = ADSRState::Attack;
         }
@@ -106,7 +106,7 @@ namespace Audolon::Envelopes::Initialized(int code)
                 {
                     this.m_state = ADSRState::Decay;
                 }
-            } 
+            }
             else if (this.m_state == ADSRState::Decay)
             {
                 this.m_lastOut -= this.m_decayStep;

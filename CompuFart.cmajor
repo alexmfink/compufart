@@ -146,55 +146,55 @@ namespace Audolon::CompuFart {
         output event string out_msg;
         output event float<8> out_values;
 
-        const float samplerate = float(processor.frequency);
-        const float samplePeriod = 1.0f / samplerate;
+        const float64 samplerate = processor.frequency;
+        const float64 samplePeriod = 1.0f / samplerate;
 
         // Mechanical Stuff		// NOTE: There are some redundancies
-        float m_mass;			// Mass (dependent on frequency)
-        float m_QOpen;		// Quality factor for open condition.  Determines r
-        float m_QClosed;	    // Quality factor for closed condition.
-        float r_;			// Damping coefficient (Dependent on m, k, Q, fLip)
-        float m_rOpen;		// Damping coefficient for open condition
-        float m_rClosed;	// Damping coefficient for closed condition
-        float m_rn;		// nonlinear damper // amf TODO: unused
-        float m_k;			// Spring coefficient (Dependent on fLip)
-        float m_kp; 		// nonlinear spring coefficient (for open condition)
-        float m_kc;		// nonlinear spring coefficient (for y below limit)
-        float m_w;			// Width of lip/opening (from a front view)
-        float m_l;			// Length of lip/opening (going from inside to outside)
-        float m_x0;		// x-coord. of rest position
-        float m_y0;		// y-coord. of rest position
-        float m_xJoint;	// The position of the joint
-        float m_yJoint;	//
-        float m_yUpperLim; // Upper limit of y (hard clips)
-        float m_yLowerLim; // Lower limit of y, beyond which a nonlin. spring is applied
-        float m_xLowerLim;		// Limit of x
-        float m_xUpperLim;		// Limit of x
+        float64 m_mass;			// Mass (dependent on frequency)
+        float64 m_QOpen;		// Quality factor for open condition.  Determines r
+        float64 m_QClosed;	    // Quality factor for closed condition.
+        float64 r_;			// Damping coefficient (Dependent on m, k, Q, fLip)
+        float64 m_rOpen;		// Damping coefficient for open condition
+        float64 m_rClosed;	// Damping coefficient for closed condition
+        float64 m_rn;		// nonlinear damper // amf TODO: unused
+        float64 m_k;			// Spring coefficient (Dependent on fLip)
+        float64 m_kp; 		// nonlinear spring coefficient (for open condition)
+        float64 m_kc;		// nonlinear spring coefficient (for y below limit)
+        float64 m_w;			// Width of lip/opening (from a front view)
+        float64 m_l;			// Length of lip/opening (going from inside to outside)
+        float64 m_x0;		// x-coord. of rest position
+        float64 m_y0;		// y-coord. of rest position
+        float64 m_xJoint;	// The position of the joint
+        float64 m_yJoint;	//
+        float64 m_yUpperLim; // Upper limit of y (hard clips)
+        float64 m_yLowerLim; // Lower limit of y, beyond which a nonlin. spring is applied
+        float64 m_xLowerLim;		// Limit of x
+        float64 m_xUpperLim;		// Limit of x
         bool m_open;				// Boolean indicating if the orifice is open or closed
-        float m_SLip;		// lip/orifice opening area
-        float m_SCup;		// area of "cup"
-        float m_xn;		// current x-coord x[n]
-        float m_yn;		// current y-coord y[n]
-        float m_xnm1;		// previous x-coord x[n-1]
-        float m_ynm1;		// previous y-coord y[n-1]
-        float m_xnm2;		// earlier x-coord x[n-2]
-        float m_ynm2;		// earlier y-coord y[n-2]
+        float64 m_SLip;		// lip/orifice opening area
+        float64 m_SCup;		// area of "cup"
+        float64 m_xn;		// current x-coord x[n]
+        float64 m_yn;		// current y-coord y[n]
+        float64 m_xnm1;		// previous x-coord x[n-1]
+        float64 m_ynm1;		// previous y-coord y[n-1]
+        float64 m_xnm2;		// earlier x-coord x[n-2]
+        float64 m_ynm2;		// earlier y-coord y[n-2]
 
         // Fluid Stuff
-        float m_ZC;		// "Cup" imedance
-        float m_rho;		// Air Density (units?)
-        float m_nu;		// Air Viscosity (units?)
-        float m_c;			// Speed of sound
-        float m_p0;		// Source/mouth pressure (The primary input/ctrl variable)
-        float m_p;			// outside/cup pressure (not atmospheric pressure--this is pressure due to flowing stuff, &c.)
-        float m_pLip;		// pressure acting on the mass(es). ( Mech eqn. uses a previous value for simplicity)
-        float m_Uac;		// Flow (not counting volume swept by lip).
-        float m_Uacm1;		// from previous time
-        float m_Un;		// Total flow (***OUTPUT***)
-        float m_ULip;		// flow from sweeping of lip
+        float64 m_ZC;		// "Cup" imedance
+        float64 m_rho;		// Air Density (units?)
+        float64 m_nu;		// Air Viscosity (units?)
+        float64 m_c;			// Speed of sound
+        float64 m_p0;		// Source/mouth pressure (The primary input/ctrl variable)
+        float64 m_p;			// outside/cup pressure (not atmospheric pressure--this is pressure due to flowing stuff, &c.)
+        float64 m_pLip;		// pressure acting on the mass(es). ( Mech eqn. uses a previous value for simplicity)
+        float64 m_Uac;		// Flow (not counting volume swept by lip).
+        float64 m_Uacm1;		// from previous time
+        float64 m_Un;		// Total flow (***OUTPUT***)
+        float64 m_ULip;		// flow from sweeping of lip
 
-        const float tauFloat = float32(twoPi);
-        const float piFloat = float(pi);
+        const float64 tauFloat = twoPi;
+        const float64 piFloat = pi;
 
         void main()
         {
@@ -206,13 +206,20 @@ namespace Audolon::CompuFart {
 
                 out_flow <- tick(in_pressure);
         
+
+                if (dummy++ == 0) {
+                    console <- "Open: ";
+                    console <- m_open;
+                    console <- "  - ";
+                }
+
                 advance();
             }
         }
 
         void init() {
             // Numbers from the aether
-            float fLip_ = 	100.0f;
+            float64 fLip_ = 	100.0f;
             m_mass =    (1.5f/(4.0f*piFloat*piFloat*fLip_));
             m_QOpen = 	3.0f;
             m_QClosed = 0.5f;
@@ -286,6 +293,7 @@ namespace Audolon::CompuFart {
 
         void Reset() 
         {
+            stopMotion();
         }
 
         event in_panic(devoid nothing)
@@ -295,22 +303,22 @@ namespace Audolon::CompuFart {
 
         event in_kc (float kc) 
         {
-            m_kc = kc;
+            m_kc = float64(kc);
         }
 
         event in_xLowerLimit (float limit) 
         {
-            m_xLowerLim = limit;
+            m_xLowerLim = float64(limit);
         }
         event in_xUpperLimit (float limit) 
         {
-            m_xUpperLim = limit;
+            m_xUpperLim = float64(limit);
         }
 
         float tick(float inPressure) 
         {
 
-            m_p0 = inPressure;
+            m_p0 = float64(inPressure);
 
             //Update past values
             m_xnm2 = m_xnm1;
@@ -361,7 +369,7 @@ namespace Audolon::CompuFart {
 
             if (m_ynm1 < m_yLowerLim)
             {
-                float displacement = (m_ynm1 - m_yLowerLim);
+                float64 displacement = (m_ynm1 - m_yLowerLim);
                 m_yn += -0.5f * m_kp * (displacement * displacement * displacement);
             }
 
@@ -404,17 +412,29 @@ namespace Audolon::CompuFart {
             {
                 m_Uacm1 = m_Uac;
 
-                // amf TODO: move all of this in the conditionals above so it's clear that Slip won't be zero
+                // amf TODO: move all of this in the conditionals above 
 
-                // These need to be 64-bit because the numbers are CRAZY
-                float64 aa = 0.5f * m_rho / (m_SLip * m_SLip) -  m_rho * (1.0f / (m_SLip * m_SCup) - 1.0f / (m_SCup * m_SCup));
-                float64 bb = m_rho * m_l * samplerate / m_SLip + 12.0f * m_nu * m_w * m_w * m_l / (m_SLip * m_SLip * m_SLip);
-                float64 cc = m_p - m_p0 - m_rho * m_l * m_Uacm1 * samplerate / m_SLip;
-                float64 radicalArg = (bb * bb - 4.0f * aa * cc);
-                float64 rt = radicalArg < 0.f ? 0.0f : radicalArg ** 0.5f;
-                m_Uac = (float(-bb) + float(rt)) / (2.0f * float(aa));
+                float64 sLipSquared = m_SLip * m_SLip;
+                float64 sLipCubed = sLipSquared * m_SLip;
+                float64 sLipTimesCup = m_SLip * m_SCup;
+                // Even if y[n] is greater than 0, it can be small enough that dependent variables are rounded to zero.
+                if (m_SLip == 0.0 || sLipSquared == 0.0 || sLipCubed == 0.0 || sLipTimesCup == 0.0) 
+                {
+                    m_Uac = 0.0;
+                    m_pLip = 0.0;
+                }
+                else
+                {
+                    // These need to be 64-bit because the numbers are CRAZY
+                    float64 aa = 0.5f * m_rho / (sLipSquared) -  m_rho * (1.0f / (sLipTimesCup) - 1.0f / (m_SCup * m_SCup));
+                    float64 bb = m_rho * m_l * samplerate / m_SLip + 12.0f * m_nu * m_w * m_w * m_l / (sLipCubed);
+                    float64 cc = m_p - m_p0 - m_rho * m_l * m_Uacm1 * samplerate / m_SLip;
+                    float64 radicalArg = (bb * bb - 4.0f * aa * cc);
+                    float64 rt = radicalArg < 0.f ? 0.0f : radicalArg ** 0.5f;
+                    m_Uac = (float64(-bb) + float64(rt)) / (2.0f * float64(aa));
 
-                m_pLip = m_p0 - 0.5f * m_rho * m_Uac * m_Uac / (m_SLip * m_SLip) - m_rho * m_l * (m_Uac - m_Uacm1) * samplerate / m_SLip - 12.0f * m_nu * m_w * m_w * m_l * m_Uac / (m_SLip * m_SLip * m_SLip);
+                    m_pLip = m_p0 - 0.5f * m_rho * m_Uac * m_Uac / (sLipSquared) - m_rho * m_l * (m_Uac - m_Uacm1) * samplerate / m_SLip - 12.0f * m_nu * m_w * m_w * m_l * m_Uac / (sLipCubed);
+                }
 
             }
             else
@@ -426,11 +446,11 @@ namespace Audolon::CompuFart {
                 // m_Uacm1 shouldn't need to be updated here
             }
 
-            float totalFlow = m_ULip + m_Uac;
+            float64 totalFlow = m_ULip + m_Uac;
 
             m_p = m_ZC * totalFlow;
 
-            return totalFlow;
+            return float32(totalFlow);
         }
 
     }

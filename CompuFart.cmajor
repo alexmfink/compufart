@@ -206,13 +206,6 @@ namespace Audolon::CompuFart {
 
                 out_flow <- tick(in_pressure);
         
-
-                if (dummy++ == 0) {
-                    console <- "Open: ";
-                    console <- m_open;
-                    console <- "  - ";
-                }
-
                 advance();
             }
         }

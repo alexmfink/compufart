@@ -162,8 +162,8 @@ namespace Audolon::CompuFart {
         float64 m_kc;		// nonlinear spring coefficient (for y below limit)
         float64 m_w;			// Width of lip/opening (from a front view)
         float64 m_l;			// Length of lip/opening (going from inside to outside)
-        float64 m_x0;		// x-coord. of rest position
-        float64 m_y0;		// y-coord. of rest position
+        float64 m_x0;		// x-coord. of rest position for linear spring
+        float64 m_y0;		// y-coord. of rest position for linear spring
         float64 m_xJoint;	// The position of the joint
         float64 m_yJoint;	//
         float64 m_yUpperLim; // Upper limit of y (hard clips)
@@ -248,12 +248,12 @@ namespace Audolon::CompuFart {
             m_c =		340.0f; 	// not used at time of comment
 
             // Start still
-            m_xn = 		m_x0;
-            m_yn = 		m_y0;
-            m_xnm1 = 	m_x0;
-            m_ynm1 = 	m_y0;
-            m_xnm2 = 	m_x0;
-            m_ynm2 = 	m_y0;
+            m_xn = 		0.0;
+            m_yn = 		0.0;
+            m_xnm1 = 	0.0;
+            m_ynm1 = 	0.0;
+            m_xnm2 = 	0.0;
+            m_ynm2 = 	0.0;
 
 
             m_SLip =		2.0f * m_w * m_yn;
@@ -274,16 +274,16 @@ namespace Audolon::CompuFart {
             m_open =		true;
 
             // Start still
-            m_xn = 		m_xLowerLim;//m_x0;
-            m_yn = 		m_yLowerLim;//m_x0;
-            m_xnm1 = 	m_xLowerLim;//m_x0;
-            m_ynm1 = 	m_yLowerLim;//m_x0;
-            m_xnm2 = 	m_xLowerLim;//m_x0;
-            m_ynm2 = 	m_yLowerLim;//m_x0;
+            m_xn = 		0.0;
+            m_yn = 		0.0;
+            m_xnm1 = 	0.0;
+            m_ynm1 = 	0.0;
+            m_xnm2 = 	0.0;
+            m_ynm2 = 	0.0;
 
             m_p0 = 		0.0f;
             m_p =		0.0f;
-            m_pLip =		0.0f;
+            m_pLip =	0.0f;
 
             m_Uac =		0.0f;
             m_Uacm1 = 	0.0f;
